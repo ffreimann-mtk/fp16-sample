@@ -7,10 +7,6 @@
 #include "convld.h"
 
 
-#define SIGNAL_SIZE   16
-#define KERNEL_SIZE    3
-#define OUT_SIZE      (SIGNAL_SIZE - KERNEL_SIZE + 1)
-
 #define FP16_THREAD_STACK_SIZE    2048
 
 
@@ -41,7 +37,7 @@ void fp16_task () {
     printf("-------------------------------\n");
     for (out_idx = 0; out_idx < OUT_SIZE; out_idx++)
     {
-        printf(" [%02ld] |   %5.2f    |   %5.2f\n", out_idx, (double) out_scalar [out_idx], (double) out_neon [out_idx]);
+        printf(" [%02zu] |   %5.2f    |   %5.2f\n", out_idx, (double) out_scalar [out_idx], (double) out_neon [out_idx]);
     }
 }
 

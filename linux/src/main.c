@@ -28,7 +28,7 @@ int main (void)
     printf("-------------------------------\n");
     for (out_idx = 0; out_idx < OUT_SIZE; out_idx++)
     {
-        printf(" [%02ld] |   %5.2f    |   %5.2f\n", out_idx, (double) out_scalar [out_idx], (double) out_neon [out_idx]);
+        printf(" [%02zu] |   %5.2f    |   %5.2f\n", out_idx, (double) out_scalar [out_idx], (double) out_neon [out_idx]);
     }
 
     return (0);

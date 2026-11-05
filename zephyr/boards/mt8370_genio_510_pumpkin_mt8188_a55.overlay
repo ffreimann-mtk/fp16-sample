@@ -1,0 +1,19 @@
+/*
+ * Copyright 2026 MediaTek
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+};
+
+&gpio0_31 {
+	status = "okay";
+};
+
+&uart1 {
+	pinctrl-0 = <&uart1_default>;
+	pinctrl-names = "default";
+	current-speed = <115200>;
+	status = "okay";
+};

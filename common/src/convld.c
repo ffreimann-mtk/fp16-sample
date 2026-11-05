@@ -1,11 +1,14 @@
 #include "convld.h"
 
 
-const _Float16 input [SIGNAL_SIZE] = {
-    1.0f16,  2.0f16,  3.0f16,  4.0f16,
-    5.0f16,  6.0f16,  7.0f16,  8.0f16,
-    9.0f16, 10.0f16, 11.0f16, 12.0f16,
-    13.0f16, 14.0f16, 15.0f16, 16.0f16
+// Add some padding to the input array to ensure that the convolution
+// can be performed without running out of bounds.
+const _Float16 input [SIGNAL_SIZE + KERNEL_SIZE - 1] = {
+    1.0f16,  2.0f16,   3.0f16,  4.0f16,
+    5.0f16,  6.0f16,   7.0f16,  8.0f16,
+    9.0f16,  10.0f16, 11.0f16, 12.0f16,
+    13.0f16, 14.0f16, 15.0f16, 16.0f16,
+    0.0f16,   0.0f16
 };
 
 const _Float16 kernel [KERNEL_SIZE] = {

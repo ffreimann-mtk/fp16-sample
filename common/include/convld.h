@@ -8,7 +8,9 @@
 #define OUT_SIZE      (SIGNAL_SIZE - KERNEL_SIZE + 1)
 
 
-extern const _Float16 input [SIGNAL_SIZE];
+// Add some padding to the input array to ensure that the convolution
+// can be performed without running out of bounds.
+extern const _Float16 input [SIGNAL_SIZE + KERNEL_SIZE - 1];
 extern const _Float16 kernel [KERNEL_SIZE];
 
 

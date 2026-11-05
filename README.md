@@ -11,6 +11,14 @@ The same test is built two ways:
 
 Both run a small **1-D convolution** twice: once with **scalar FP16** (`FEAT_FP16` / `FPHP`) and once with **NEON FP16** (`ASIMDHP`). They print the two results side by side. If the results match, the core can execute both kinds of FP16 instruction correctly in that environment.
 
+## Getting the source
+
+```sh
+git clone https://github.com/ffreimann-mtk/fp16-sample.git
+```
+
+The build and run steps below use a checkout at `/hdb/MediaTek/Pumpkin/RITY-Scarthgap_v26.0_Jailhouse/fp16-sample`; replace it with your own path.
+
 ---
 
 ## Directory layout
@@ -38,7 +46,9 @@ fp16-sample/
 
 ## What is tested
 
-`common/src/convld.c` uses a fixed 16-element input signal `1.0 … 16.0` and a 3-tap kernel `{0.5, 1.0, 0.5}`. Both stored as `_Float16`. The output has `OUT_SIZE = 16 − 3 + 1 = 14` elements.
+`common/src/convld.c` uses a fixed 16-sample input signal `1.0 … 16.0` and a 3-tap kernel `{0.5, 1.0, 0.5}`, both stored as `_Float16`. The output has `OUT_SIZE = 16 − 3 + 1 = 14` elements.
+
+The input array is padded with `KERNEL_SIZE − 1` (2) zeros, so it holds `SIGNAL_SIZE + KERNEL_SIZE − 1 = 18` elements. This is needed because the NEON code always computes 8 outputs at a time, and 14 is not a multiple of 8. On its second pass (`out_idx = 8`) it reads `input[8..17]` and writes `out[8..15]`. The padding keeps those reads inside the array. The output buffers hold `SIGNAL_SIZE` (16) elements, so the writes also stay in bounds. Outputs 14 and 15 are extra values and are not printed.
 
 ### `conv1d_scalar()` — scalar FP16
 A simple nested loop over `_Float16` values. Built with `-march=armv8.2-a+fp16` (Linux) or `-mcpu=cortex-a55` (Zephyr), so the compiler emits native scalar half-precision instructions (`fmul h`, `fadd h`, `fmadd h`, …) instead of converting to single precision.
@@ -97,16 +107,21 @@ On Cortex-A55 both should be `True`. You can check the same thing with `grep -o 
 A Yocto SDK installed for the RITY image (aarch64-poky-linux toolchain).
 
 ### Build
-`make/Common.mak` provides a default `YOCTO_SDK_PATH`. Override it to point at your SDK:
+`make/Common.mak` sets `YOCTO_SDK_PATH` to the placeholder `/path/to/yocto/sdk`, so you must point it at your installed SDK. Either pass it on the command line or export it:
 
 ```sh
 cd linux
 make YOCTO_SDK_PATH=/path/to/RITY/SDK/<soc>/<version>
+# or
+export YOCTO_SDK_PATH=/path/to/RITY/SDK/<soc>/<version>
+make
 ```
 
-When the SDK path is invalid, the build prints a red "Skip building" message and produces no binary.
+If `YOCTO_SDK_PATH` is still the placeholder or does not exist, the build prints a red "Skip building" message and produces no binary.
 
 Output: `linux/build/yocto_armv8/fp16-test`
+
+`make clean` deletes the object files and the `fp16-test` binary.
 
 Main compiler flags (from `Makefile.yocto_armv8`): `-march=armv8.2-a+fp16 -O2 --sysroot=<SDK>/sysroots/armv8a-poky-linux`.
 
@@ -180,12 +195,6 @@ jailhouse disable
 
 ---
 
-## Known issues / notes
+## Notes
 
-- **NEON loop reads past the input.** `OUT_SIZE` (14) is not a multiple of 8. The second NEON iteration (`out_idx = 8`) loads `input[8..17]`, which is 2 elements beyond `input[16]`, and stores `out[8..15]`. The output buffers have `SIGNAL_SIZE` (16) elements, so the store stays in bounds and only the first 14 results are printed. The extra reads are still out of bounds. Fix by padding `input` to 18 elements or handling the tail with the scalar loop.
-- `zephyr/src/main.c` defines `SIGNAL_SIZE` / `KERNEL_SIZE` / `OUT_SIZE` again, though `convld.h` already provides them. The values match, so it builds, but the copies can drift apart.
-- `linux/Makefile.yocto_armv8` `clean` deletes `$(PROJ_NAME)_$(NAME)` (`fp16-test_yocto_armv8`), but the binary is called `fp16-test`, so `make clean` leaves it in place.
-- `printf("%02ld", out_idx)` passes a `size_t`; `%02zu` is the portable format.
-- The default `YOCTO_SDK_PATH` in `make/Common.mak` points at a v25.1 SDK; override it for v26.0.
-- The `kernel/include` / `arch_page_phys_get()` block in `zephyr/CMakeLists.txt` comes from an ivshmem-based project. This sample does not need it.
 - `zephyr/README.rst` and `zephyr/sample.yaml` are empty placeholders.

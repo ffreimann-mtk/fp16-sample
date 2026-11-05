@@ -67,4 +67,4 @@ exe:
 
 clean:
 	@rm -f $(OBJS)
-	@rm -f $(BUILD_PATH)/$(PROJ_NAME)_$(NAME)
+	@rm -f $(BUILD_PATH)/$(PROJ_NAME)
